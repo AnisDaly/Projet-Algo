@@ -344,9 +344,9 @@ void generateCombinations(int n, int k, int combinations[TOTAL_COMBINATIONS][5])
     }
 }
 
-void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori, t_move *phase_moves) {
-    t_position best_position = start_pos;
-    t_orientation best_orientation = start_ori;
+void findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_ori, t_move *phase_moves) {
+    t_position best_position = *start_pos;
+    t_orientation best_orientation = *start_ori;
     int min_cost = INT_MAX;
     t_move best_phase[5];
 
@@ -354,8 +354,8 @@ void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori,
     generateCombinations(9, 5, combination_indices); // Générer toutes les combinaisons
 
     for (int c = 0; c < TOTAL_COMBINATIONS; c++) {
-        t_position current_pos = start_pos;
-        t_orientation current_ori = start_ori;
+        t_position current_pos = *start_pos;
+        t_orientation current_ori = *start_ori;
         t_move current_phase[5];
 
         // Charger la combinaison courante
@@ -371,15 +371,20 @@ void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori,
                 break;
             }
 
+            // Vérifier si le robot tombe dans une crevasse
+            if (map->soils[current_pos.y][current_pos.x] == CREVASSE) {
+                valid = 0; // Phase invalide
+                break;
+            }
+
             // Si on atteint la base, c'est gagné
             if (map->costs[current_pos.y][current_pos.x] == 0) {
-                printf("C'est gagne ! Phase optimale trouvee :\n");
-                for (int j = 0; j <= i; j++) {
-                    printf("Mouvement %d : %s\n", j + 1, moveToString(current_phase[j]));
-                }
-                printf("Position finale : (%d, %d) | Orientation finale : %s | Cout total : 0\n",
-                       current_pos.x, current_pos.y, orientationToString(current_ori));
-                return;
+                // Retenir cette phase comme la meilleure immédiatement
+                memcpy(best_phase, current_phase, sizeof(best_phase));
+                best_position = current_pos;
+                best_orientation = current_ori;
+                min_cost = 0;
+                goto end_phase; // Sortir immédiatement de toutes les boucles
             }
         }
 
@@ -395,14 +400,29 @@ void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori,
         }
     }
 
-    // Afficher la phase optimale
-    printf("Phase optimale trouvee :\n");
+    end_phase:
+    // Mettre à jour la position et l'orientation finales
+    *start_pos = best_position;
+    *start_ori = best_orientation;
+
+    // Afficher le résultat final
+    if (min_cost == INT_MAX) {
+        printf("Aucune phase valide trouvee. Le robot est perdu ou mort.\n");
+    } else if (min_cost == 0) {
+        printf("C'est gagne ! Phase optimale trouvee :\n");
+    } else {
+        printf("Phase optimale trouvee :\n");
+    }
+
     for (int i = 0; i < 5; i++) {
         printf("Mouvement %d : %s\n", i + 1, moveToString(best_phase[i]));
     }
     printf("Position finale : (%d, %d) | Orientation finale : %s | Cout total : %d\n",
            best_position.x, best_position.y, orientationToString(best_orientation), min_cost);
 }
+
+
+
 
 
 

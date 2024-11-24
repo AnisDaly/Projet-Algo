@@ -39,7 +39,7 @@ int main() {
         }
         printf("\n");
     }
-    // printf the costs, aligned left 5 digits
+
     for (int i = 0; i < map.y_max; i++)
     {
         for (int j = 0; j < map.x_max; j++)
@@ -57,8 +57,7 @@ int main() {
     int availability[7] = {22, 15, 7, 7, 21, 21, 7}; // Disponibilités des mouvements
     t_move phase_moves[9];
 
-// Générer les 9 mouvements pour la phase
-    generatePhaseMoves(phase_moves, availability);
+
 
     t_node *root = buildTree(&map, start_pos, start_ori, 0, phase_moves);
     if (!root) {
@@ -73,7 +72,24 @@ int main() {
 
     t_position positions[5];
     int total_cost = 0;
-    findOptimalPhase(&map, start_pos, start_ori, phase_moves);
+    while (1) {
+        // Générer les 9 mouvements pour la phase
+        generatePhaseMoves(phase_moves, availability);
+
+        // Exécuter la phase optimale
+        findOptimalPhase(&map, &start_pos, &start_ori, phase_moves);
+
+        // Si le robot a atteint la base (position avec un coût de 0)
+        if (map.costs[start_pos.y][start_pos.x] == 0) {
+            printf("Le robot a atteint la base. Exploration terminee.\n");
+            break;
+        }
+
+        // Réinitialiser les disponibilités des mouvements pour la prochaine phase
+        resetMovementAvailability(availability);
+
+        printf("\n--- Nouvelle phase ---\n");
+    }
 
     return 0;
 }

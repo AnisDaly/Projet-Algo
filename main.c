@@ -16,22 +16,12 @@ void print_orientation(t_orientation ori) {
     }
 }
 
-void measureExecutionTime(void (*func)(void *), void *args) {
-    clock_t start, end;
-    double cpu_time_used;
 
-    start = clock();
-    func(args); // Appelle la fonction passée en paramètre
-    end = clock();
-
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Temps d'execution : %f secondes\n", cpu_time_used);
-}
 
 int main() {
     t_map map;
 
-    
+
 #if defined(_WIN32) || defined(_WIN64)
     map = createMapFromFile("..\\maps\\example1.map");
 #else
@@ -98,9 +88,24 @@ int main() {
         // Générer les 9 mouvements pour la phase
         generatePhaseMoves(phase_moves, availability);
 
-        // Exécuter la phase optimale
-        findOptimalPhase(&map, &start_pos, &start_ori, phase_moves);
+        clock_t start, end;
+        double cpu_time_used;
 
+        int n = 100000000; // Exemple de boucle
+        long sum = 0;
+
+        start = clock();
+        // Exécuter la phase optimale
+        int result = findOptimalPhase(&map, &start_pos, &start_ori, phase_moves);
+
+        end = clock();
+        cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+        printf("Temps d'execution : %f secondes\n",cpu_time_used);
+
+        if (result == -1) {
+            printf("Le robot est perdu ! Fin de la mission.\n");
+            break; // Arrêter le programme si le robot est perdu ou mort
+        }
         // Si le robot a atteint la base (position avec un coût de 0)
         if (map.costs[start_pos.y][start_pos.x] == 0) {
             printf("Le robot a atteint la base. Exploration terminee.\n");

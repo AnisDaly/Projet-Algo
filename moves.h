@@ -20,7 +20,7 @@ static char _moves[8][8] = {"F 10m", "F 20m", "F 30m", "B 10m", "T left", "T rig
  */
 
 void adjust_move_for_terrain(t_map *map, t_position *pos, t_move *move);
-void apply_move(t_position *pos, t_orientation *orientation, t_move move);
+int apply_move(t_map *map, t_position *pos, t_orientation *ori, t_move *move, int *remaining_moves);
 
 /**
  * @brief function to get a t_move as a string

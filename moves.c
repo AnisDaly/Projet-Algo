@@ -187,43 +187,95 @@ void adjust_move_for_terrain(t_map *map, t_position *pos, t_move *move) {
     }
 }
 
-void apply_move(t_position *pos, t_orientation *ori, t_move move) {
-    switch (move) {
-        case F_10:
-        case F_20:
-        case F_30: {
-            int step = (move == F_10) ? 1 : (move == F_20) ? 2 : 3;
-            switch (*ori) {
-                case NORTH: pos->y -= step; break; // Y diminue vers le haut
-                case EAST:  pos->x += step; break; // X augmente vers la droite
-                case SOUTH: pos->y += step; break; // Y augmente vers le bas
-                case WEST:  pos->x -= step; break; // X diminue vers la gauche
-            }
-            break;
-        }
-        case B_10: {
-            int step = 1; // Marche arrière de 10 unités
-            switch (*ori) {
-                case NORTH: pos->y += step; break;
-                case EAST:  pos->x -= step; break;
-                case SOUTH: pos->y -= step; break;
-                case WEST:  pos->x += step; break;
-            }
-            break;
-        }
-        case T_LEFT:
-            *ori = (*ori + 3) % 4; // Cycle : 0 -> 3 -> 2 -> 1 -> 0
-            break;
-        case T_RIGHT:
-            *ori = (*ori + 1) % 4; // Cycle : 0 -> 1 -> 2 -> 3 -> 0
-            break;
-        case U_TURN:
-            *ori = (*ori + 2) % 4; // Cycle : 0 -> 2 et 1 -> 3
-            break;
-        default:
-            break; // Pas de mouvement
+#include <stdio.h>
+#include "types.h" // Assurez-vous que ce fichier contient les définitions des types t_map, t_position, t_orientation, t_move, etc.
+
+int apply_move(t_map *map, t_position *pos, t_orientation *ori, t_move *move, int *remaining_moves) {
+    // Vérifier s'il reste des mouvements
+    if (*remaining_moves <= 0) {
+        printf("Erreur : Aucun mouvement restant.\n");
+        return 0;
     }
+
+    // Gestion des types de sol
+    t_soil current_soil = map->soils[pos->y][pos->x];
+
+    // Réduction des mouvements restants
+    (*remaining_moves)--;
+
+    // Appliquer le mouvement
+    switch (*move) {
+        case F_10:
+            if (current_soil == ERG) {
+
+                return 1; // Mouvement valide mais pas de déplacement
+            }
+            switch (*ori) {
+                case NORTH: pos->y--; break;
+                case EAST:  pos->x++; break;
+                case SOUTH: pos->y++; break;
+                case WEST:  pos->x--; break;
+
+            }
+            break;
+
+        case F_20:
+            if (current_soil == ERG) {
+
+                switch (*ori) {
+                    case NORTH: pos->y--; break;
+                    case EAST:  pos->x++; break;
+                    case SOUTH: pos->y++; break;
+                    case WEST:  pos->x--; break;
+
+                }
+            } else {
+                switch (*ori) {
+                    case NORTH: pos->y -= 2; break;
+                    case EAST:  pos->x += 2; break;
+                    case SOUTH: pos->y += 2; break;
+                    case WEST:  pos->x -= 2; break;
+
+                }
+            }
+            break;
+
+        case T_LEFT:
+            *ori = (*ori + 3) % 4; // Tourne à gauche
+            break;
+
+        case T_RIGHT:
+            *ori = (*ori + 1) % 4; // Tourne à droite
+            break;
+
+        case U_TURN:
+            *ori = (*ori + 2) % 4; // Demi-tour
+            break;
+
+        default:
+
+            return 0; // Mouvement invalide
+    }
+
+    // Vérifications après le mouvement
+    if (!isValidLocalisation(*pos, map->x_max, map->y_max)) {
+        //printf("Le robot est sorti de la carte! Fin de la phase. \n");
+        return 0; // Mouvement invalide
+    }
+
+    if (map->soils[pos->y][pos->x] == CREVASSE) {
+
+        return 0; // Mouvement invalide
+    }
+
+    if (map->soils[pos->y][pos->x] == REG) {
+
+        *remaining_moves = 4; // Limiter les mouvements
+    }
+
+    return 1; // Mouvement valide
 }
+
 
 
 

@@ -161,45 +161,6 @@ void retrievePath(t_node *root, t_node *leaf, t_move *moves, t_position *positio
 
 
 
-void printOptimalPath(t_move *moves, t_position *positions, int *costs, int max_depth) {
-    printf("Chemin optimal trouve :\n");
-    for (int i = 0; i < max_depth; i++) {
-        printf("Mouvement %d : ", i + 1);
-        switch (moves[i]) {
-            case F_10: printf("Avancer de 10 unites\n"); break;
-            case F_20: printf("Avancer de 20 unites\n"); break;
-            case F_30: printf("Avancer de 30 unites\n"); break;
-            case B_10: printf("Reculer de 10 unites\n"); break;
-            case T_LEFT: printf("Tourner a gauche\n"); break;
-            case T_RIGHT: printf("Tourner a droite\n"); break;
-            case U_TURN: printf("Faire un demi-tour\n"); break;
-            default: printf("Aucun mouvement\n"); break;
-        }
-
-        if (positions[i].x != -1 && positions[i].y != -1) {
-            printf("Position apres mouvement : (%d, %d)\n", positions[i].x, positions[i].y);
-            printf("Cout total a cette etape : %d\n", costs[i]);
-        }
-    }
-}
-
-
-void printOptimalMoves(t_move *optimal_moves, int size) {
-    printf("Vérification des mouvements optimaux :\n");
-    for (int i = 0; i < size; i++) {
-        switch (optimal_moves[i]) {
-            case F_10: printf("Mouvement %d : Avancer de 10 unités\n", i + 1); break;
-            case F_20: printf("Mouvement %d : Avancer de 20 unités\n", i + 1); break;
-            case F_30: printf("Mouvement %d : Avancer de 30 unités\n", i + 1); break;
-            case B_10: printf("Mouvement %d : Reculer de 10 unités\n", i + 1); break;
-            case T_LEFT: printf("Mouvement %d : Tourner à gauche\n", i + 1); break;
-            case T_RIGHT: printf("Mouvement %d : Tourner à droite\n", i + 1); break;
-            case U_TURN: printf("Mouvement %d : Faire un demi-tour\n", i + 1); break;
-            case NO_MOVE: printf("Mouvement %d : Aucun mouvement\n", i + 1); break;
-            default: printf("Mouvement %d : Inconnu\n", i + 1); break;
-        }
-    }
-}
 
 void generatePhaseMoves(t_move *phase_moves, int *availability) {
     static const char *move_names[] = {
@@ -239,7 +200,7 @@ t_node *buildTree(t_map *map, t_position start_pos, t_orientation start_ori, int
     if (depth == max_depth) return NULL; // Arrêter la construction au niveau max
 
     // Créez le nœud racine
-    t_node *root = createNode(start_pos, start_ori, F_10, map->costs[start_pos.y][start_pos.x]); // F_10 est un mouvement par défaut ici
+    t_node *root = createNode(start_pos, start_ori, NO_MOVE, map->costs[start_pos.y][start_pos.x]); // NO_MOVE par défaut au niveau racine
     if (root->cost == 0) return root; // Si on atteint la base station, retourne immédiatement
 
     int child_count = 0; // Compteur pour limiter les enfants
@@ -250,20 +211,25 @@ t_node *buildTree(t_map *map, t_position start_pos, t_orientation start_ori, int
 
         t_position new_pos = start_pos;
         t_orientation new_ori = start_ori;
+        int remaining_moves = 5; // Hypothèse : initialement, le rover a 5 mouvements disponibles
+        t_move current_move = phase_moves[i]; // Prendre le i-ème mouvement généré pour cette phase
 
-        // Applique le mouvement
-        apply_move(&new_pos, &new_ori, phase_moves[i]);
+        // Applique le mouvement et vérifie sa validité
+        if (apply_move(map, &new_pos, &new_ori, &current_move, &remaining_moves) == 0) {
+            continue; // Mouvement invalide, passez au suivant
+        }
 
-        // Vérifie si la position est valide
+        // Vérifie si la position est valide (pas hors de la carte)
         if (isValidLocalisation(new_pos, map->x_max, map->y_max)) {
-            int cost = root->cost + map->costs[new_pos.y][new_pos.x];
-            t_node *child = createNode(new_pos, new_ori, phase_moves[i], cost);
+            int cost = map->costs[new_pos.y][new_pos.x]; // Coût de la case finale après le mouvement
+            t_node *child = createNode(new_pos, new_ori, current_move, cost);
 
             // Ajout du nœud enfant au parent
             if (addChild(root, child)) {
                 child_count++; // Incrémenter si l'ajout est réussi
             } else {
                 free(child); // Libérer la mémoire si l'ajout échoue
+                continue;
             }
 
             // Construction récursive des sous-arbres
@@ -280,6 +246,8 @@ t_node *buildTree(t_map *map, t_position start_pos, t_orientation start_ori, int
 
     return root;
 }
+
+
 
 int apply_move_simulation(t_map *map, t_position *pos, t_orientation *ori, t_move move) {
     t_position new_pos = *pos; // Copier la position actuelle
@@ -344,7 +312,7 @@ void generateCombinations(int n, int k, int combinations[TOTAL_COMBINATIONS][5])
     }
 }
 
-void findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_ori, t_move *phase_moves) {
+int findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_ori, t_move *phase_moves) {
     t_position best_position = *start_pos;
     t_orientation best_orientation = *start_ori;
     int min_cost = INT_MAX;
@@ -373,8 +341,8 @@ void findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_or
 
             // Vérifier si le robot tombe dans une crevasse
             if (map->soils[current_pos.y][current_pos.x] == CREVASSE) {
-                valid = 0; // Phase invalide
-                break;
+                printf("Le robot est tombe dans une crevasse ! Fin de la mission.\n");
+                exit(EXIT_FAILURE); // Arrêter immédiatement le programme
             }
 
             // Si on atteint la base, c'est gagné
@@ -405,21 +373,24 @@ void findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_or
     *start_pos = best_position;
     *start_ori = best_orientation;
 
-    // Afficher le résultat final
     if (min_cost == INT_MAX) {
-        printf("Aucune phase valide trouvee. Le robot est perdu ou mort.\n");
+
+        return -1; // Signal de fin d'exécution
     } else if (min_cost == 0) {
         printf("C'est gagne ! Phase optimale trouvee :\n");
-    } else {
-        printf("Phase optimale trouvee :\n");
+        return 1; // Signal que la base a été atteinte
     }
 
+    // Afficher les mouvements de la phase optimale
+    printf("Phase optimale trouvee :\n");
     for (int i = 0; i < 5; i++) {
         printf("Mouvement %d : %s\n", i + 1, moveToString(best_phase[i]));
     }
     printf("Position finale : (%d, %d) | Orientation finale : %s | Cout total : %d\n",
            best_position.x, best_position.y, orientationToString(best_orientation), min_cost);
+    return 0; // Continuer les phases
 }
+
 
 
 

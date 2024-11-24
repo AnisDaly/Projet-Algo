@@ -21,12 +21,11 @@ void freeTree(t_node *root);
 t_node *buildTree(t_map *map, t_position start_pos, t_orientation start_ori, int depth, t_move *phase_moves);
 void exploreTree(t_node *root, t_node **best_leaf, int *min_cost, int depth);
 void findAndPrintOptimalPath(t_node *root, t_map *map);
-void printOptimalMoves(t_move *optimal_moves, int size);
-void printOptimalPath(t_move *moves, t_position *positions, int *costs, int max_depth);
+
 void retrievePath(t_node *root, t_node *leaf, t_move *moves, t_position *positions, int *costs, int max_depth);
 void generatePhaseMoves(t_move *phase_moves, int *availability);
 void resetMovementAvailability(int *availability);
-void findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_ori, t_move *phase_moves);
+int findOptimalPhase(t_map *map, t_position *start_pos, t_orientation *start_ori, t_move *phase_moves);
 
 
 #endif // TREE_H

@@ -57,7 +57,7 @@ t_position DOWN(t_position pos)
 void executeMovementPhase(t_map *map, t_position *pos, t_orientation *orientation, t_move *moves) {
     for (int i = 0; i < 5; i++) {
         adjust_move_for_terrain(map, pos, &moves[i]);
-        apply_move(pos, orientation, moves[i]);
+        apply_move(&map, &pos, &orientation, &move, &moves);
 
         // Vérifier si la position est valide
         if (!isValidLocalisation(*pos, map->x_max, map->y_max)) {

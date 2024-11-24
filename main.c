@@ -23,9 +23,9 @@ int main() {
 
 
 #if defined(_WIN32) || defined(_WIN64)
-    map = createMapFromFile("..\\maps\\example1.map");
+    map = createMapFromFile("..\\maps\\Mars.map");
 #else
-    map = createMapFromFile("../maps/example1.map");
+    map = createMapFromFile("../maps/Mars.map");
 #endif
 
     t_position start_pos = generateRandomPosition(&map);

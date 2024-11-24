@@ -1,5 +1,19 @@
 #include <stdio.h>
 #include "map.h"
+#include "tree.h"
+#include "types.h"
+#include <stdlib.h>
+#include "loc.h"
+
+void print_orientation(t_orientation ori) {
+    switch (ori) {
+        case NORTH: printf("Orientation actuelle : North\n"); break;
+        case EAST: printf("Orientation actuelle : East\n"); break;
+        case SOUTH: printf("Orientation actuelle : South\n"); break;
+        case WEST: printf("Orientation actuelle : West\n"); break;
+        default: printf("Orientation inconnue\n"); break;
+    }
+}
 
 int main() {
     t_map map;
@@ -12,6 +26,9 @@ int main() {
 #else
     map = createMapFromFile("../maps/example1.map");
 #endif
+
+    t_position start_pos = generateRandomPosition(&map);
+    printf("Position de depart aleatoire : (%d, %d)\n", start_pos.x, start_pos.y);
 
     printf("Map created with dimensions %d x %d\n", map.y_max, map.x_max);
     for (int i = 0; i < map.y_max; i++)
@@ -32,5 +49,47 @@ int main() {
         printf("\n");
     }
     displayMap(map);
+
+
+    t_orientation start_ori = generateRandomOrientation();
+    print_orientation(start_ori);
+
+    int availability[7] = {22, 15, 7, 7, 21, 21, 7}; // Disponibilités des mouvements
+    t_move phase_moves[9];
+
+// Générer les 9 mouvements pour la phase
+    generatePhaseMoves(phase_moves, availability);
+
+    t_node *root = buildTree(&map, start_pos, start_ori, 0, phase_moves);
+    if (!root) {
+        printf("Erreur : impossible de construire l'arbre\n");
+        return EXIT_FAILURE;
+    }
+    printf("Arbre construit avec succes\n");
+
+    t_node *best_leaf = NULL;
+    int min_cost = INT_MAX;
+
+
+    exploreTree(root, &best_leaf, &min_cost, 0);
+
+    if (best_leaf) {
+        printf("Chemin optimal trouve avec un cout total minimal : %d\n", min_cost);
+
+        t_move moves[5];
+        t_position positions[5];
+        int costs[5];
+
+        retrievePath(root, best_leaf, moves, positions, costs, 5);
+        printOptimalPath(moves, positions, costs, 5);
+
+        // Mettre à jour la position finale du robot
+        t_position final_pos = positions[4];
+        printf("Position finale du robot : (%d, %d)\n", final_pos.x, final_pos.y);
+    } else {
+        printf("Erreur : Aucun chemin valide trouvé.\n");
+    }
+    printf("Fin du programme\n");
+
     return 0;
 }

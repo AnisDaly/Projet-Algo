@@ -3,7 +3,9 @@
 //
 
 #include "moves.h"
-
+#include <limits.h>
+#include <stdlib.h>
+#include <stdio.h>
 /* prototypes of local functions */
 /* local functions are used only in this file, as helper functions */
 
@@ -129,7 +131,7 @@ t_localisation translate(t_localisation loc, t_move move)
         default:
             break;
     }
-        return loc_init(res.x, res.y, loc.ori);
+    return loc_init(res.x, res.y, loc.ori);
 
 }
 
@@ -152,4 +154,83 @@ void updateLocalisation(t_localisation *p_loc, t_move m)
 {
     *p_loc = move(*p_loc, m);
     return;
+}
+
+
+
+
+
+
+
+void adjust_move_for_terrain(t_map *map, t_position *pos, t_move *move) {
+    t_soil current_terrain = map->soils[pos->y][pos->x];
+
+    switch (current_terrain) {
+        case CREVASSE:
+            *move = U_TURN; // Demi-tour obligatoire
+            break;
+
+        case ERG:
+            // Si le terrain est sableux (ERG), limiter les déplacements
+            if (*move == F_30) {
+                *move = F_10; // Réduire le mouvement
+            }
+            break;
+
+        case REG:
+            // Régolithe (REG) : pas d'ajustement pour le moment
+            break;
+
+        default:
+            break;
+    }
+}
+
+void apply_move(t_position *pos, t_orientation *ori, t_move move) {
+    switch (move) {
+        case F_10: // Avancer de 10 unités
+        case F_20: // Avancer de 20 unités
+        case F_30: // Avancer de 30 unités
+        {
+            int step = (move == F_10) ? 1 : (move == F_20) ? 2 : 3; // Conversion en pas
+            switch (*ori) {
+                case NORTH: pos->y -= step; break;
+                case EAST:  pos->x += step; break;
+                case SOUTH: pos->y += step; break;
+                case WEST:  pos->x -= step; break;
+                default: break;
+            }
+            break;
+        }
+
+        case B_10: // Reculer de 10 unités
+        {
+            int step = 1; // Recul toujours de 1 pas
+            switch (*ori) {
+                case NORTH: pos->y += step; break;
+                case EAST:  pos->x -= step; break;
+                case SOUTH: pos->y -= step; break;
+                case WEST:  pos->x += step; break;
+                default: break;
+            }
+            break;
+        }
+
+        case T_LEFT: // Tourner à gauche
+            *ori = (*ori + 3) % 4; // Cycle dans les orientations
+            break;
+
+        case T_RIGHT: // Tourner à droite
+            *ori = (*ori + 1) % 4; // Cycle dans les orientations
+            break;
+
+        case U_TURN: // Faire un demi-tour
+            *ori = (*ori + 2) % 4; // Cycle dans les orientations
+            break;
+
+        default:
+            break; // Mouvement non valide ou aucun mouvement
+    }
+
+
 }

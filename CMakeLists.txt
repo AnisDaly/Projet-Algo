@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.27)
 project(untitled1 C)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 add_executable(untitled1 main.c
         loc.c
@@ -13,4 +14,7 @@ add_executable(untitled1 main.c
         queue.c
         queue.h
         stack.c
-        stack.h)
+        stack.h
+        types.h
+        tree.h
+        tree.c)

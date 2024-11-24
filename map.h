@@ -4,20 +4,19 @@
 
 #ifndef UNTITLED1_MAP_H
 #define UNTITLED1_MAP_H
+#include "types.h"
 
 #define COST_UNDEF 65535
 /**
  * @brief Enum for the possible soils of the map
  */
-typedef enum e_soil
-{
-    BASE_STATION,
-    PLAIN,
-    ERG,
-    REG,
-    CREVASSE
-} t_soil;
 
+typedef struct {
+    int x_max;
+    int y_max;
+    t_soil **soils;   // Changer int ** en t_soil **
+    int **costs;      // La grille des coûts reste int **
+} t_map;
 /**
  * @brief Array of costs for the soils
  */
@@ -27,13 +26,7 @@ static const int _soil_cost[5] = {0, 1, 2, 4, 10000};
  * @brief Structure for the map
 
  */
-typedef struct s_map
-{
-    t_soil  **soils;
-    int     **costs;
-    int     x_max;
-    int     y_max;
-} t_map;
+
 
 /**
  * @brief Function to initialise the map from a file
@@ -47,12 +40,15 @@ t_map createMapFromFile(char *);
  * @param none
  * @return a standard map
  */
- t_map createTrainingMap();
+t_map createTrainingMap();
 
 /**
  * @brief display the map with characters
  * @param map : the map to display
  */
 void displayMap(t_map);
+void calculateCosts(t_map map);
+
+
 
 #endif //UNTITLED1_MAP_H

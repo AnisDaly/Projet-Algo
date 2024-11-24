@@ -6,6 +6,9 @@
 #define UNTITLED1_MOVES_H
 
 #include "loc.h"
+#include "types.h"
+#include "moves.h"
+
 
 /**
  * @brief Array of strings for the possible moves of the robot
@@ -16,16 +19,8 @@ static char _moves[8][8] = {"F 10m", "F 20m", "F 30m", "B 10m", "T left", "T rig
  * @brief Enum for the possible moves of the robot
  */
 
-typedef enum e_move
-{
-    F_10, // Forward 10 m
-    F_20, // Forward 20 m
-    F_30, // Forward 30 m
-    B_10, // Backward 10 m
-    T_LEFT, // Turn left (+90°)
-    T_RIGHT, // Turn right (-90°)
-    U_TURN
-} t_move;
+void adjust_move_for_terrain(t_map *map, t_position *pos, t_move *move);
+void apply_move(t_position *pos, t_orientation *orientation, t_move move);
 
 /**
  * @brief function to get a t_move as a string
@@ -49,5 +44,7 @@ t_localisation move(t_localisation, t_move);
  * @return none
  */
 void updateLocalisation(t_localisation *, t_move);
+
+
 
 #endif //UNTITLED1_MOVES_H

@@ -71,25 +71,9 @@ int main() {
     int min_cost = INT_MAX;
 
 
-    exploreTree(root, &best_leaf, &min_cost, 0);
-
-    if (best_leaf) {
-        printf("Chemin optimal trouve avec un cout total minimal : %d\n", min_cost);
-
-        t_move moves[5];
-        t_position positions[5];
-        int costs[5];
-
-        retrievePath(root, best_leaf, moves, positions, costs, 5);
-        printOptimalPath(moves, positions, costs, 5);
-
-        // Mettre à jour la position finale du robot
-        t_position final_pos = positions[4];
-        printf("Position finale du robot : (%d, %d)\n", final_pos.x, final_pos.y);
-    } else {
-        printf("Erreur : Aucun chemin valide trouvé.\n");
-    }
-    printf("Fin du programme\n");
+    t_position positions[5];
+    int total_cost = 0;
+    findOptimalPhase(&map, start_pos, start_ori, phase_moves);
 
     return 0;
 }

@@ -26,7 +26,7 @@ void printOptimalPath(t_move *moves, t_position *positions, int *costs, int max_
 void retrievePath(t_node *root, t_node *leaf, t_move *moves, t_position *positions, int *costs, int max_depth);
 void generatePhaseMoves(t_move *phase_moves, int *availability);
 void resetMovementAvailability(int *availability);
-
+void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori, t_move *phase_moves);
 
 
 #endif // TREE_H

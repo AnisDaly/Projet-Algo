@@ -4,7 +4,18 @@
 #include "types.h"
 #include "map.h"
 #include "moves.h"
+#include <limits.h>
+#include "string.h"
 
+const char* orientationToString(t_orientation ori) {
+    switch (ori) {
+        case NORTH: return "North";
+        case EAST: return "East";
+        case SOUTH: return "South";
+        case WEST: return "West";
+        default: return "Unknown";
+    }
+}
 
 #define MAX_CHILDREN 9
 // Crée un nœud dans l'arbre
@@ -268,6 +279,129 @@ t_node *buildTree(t_map *map, t_position start_pos, t_orientation start_ori, int
     }
 
     return root;
+}
+
+int apply_move_simulation(t_map *map, t_position *pos, t_orientation *ori, t_move move) {
+    t_position new_pos = *pos; // Copier la position actuelle
+    t_orientation new_ori = *ori; // Copier l'orientation actuelle
+
+    // Appliquer le mouvement
+    switch (move) {
+        case F_10:
+            if (*ori == NORTH) new_pos.y--;
+            else if (*ori == SOUTH) new_pos.y++;
+            else if (*ori == EAST) new_pos.x++;
+            else if (*ori == WEST) new_pos.x--;
+            break;
+        case B_10:
+            if (*ori == NORTH) new_pos.y++;
+            else if (*ori == SOUTH) new_pos.y--;
+            else if (*ori == EAST) new_pos.x--;
+            else if (*ori == WEST) new_pos.x++;
+            break;
+        case T_LEFT:
+            new_ori = (new_ori + 3) % 4; // Tourner à gauche
+            break;
+        case T_RIGHT:
+            new_ori = (new_ori + 1) % 4; // Tourner à droite
+            break;
+        case U_TURN:
+            new_ori = (new_ori + 2) % 4; // Demi-tour
+            break;
+        default:
+            return 0; // Mouvement invalide
+    }
+
+    // Vérifier si la nouvelle position est valide
+    if (new_pos.x < 0 || new_pos.x >= map->x_max || new_pos.y < 0 || new_pos.y >= map->y_max) {
+        return 0; // Mouvement invalide (hors de la carte)
+    }
+
+    // Mettre à jour la position et l'orientation
+    *pos = new_pos;
+    *ori = new_ori;
+
+    return 1; // Mouvement valide
+}
+#define TOTAL_COMBINATIONS 126
+
+void generateCombinations(int n, int k, int combinations[TOTAL_COMBINATIONS][5]) {
+    int indices[5];
+    int count = 0;
+
+    // Générer les indices pour les combinaisons
+    for (indices[0] = 0; indices[0] < n; indices[0]++) {
+        for (indices[1] = indices[0] + 1; indices[1] < n; indices[1]++) {
+            for (indices[2] = indices[1] + 1; indices[2] < n; indices[2]++) {
+                for (indices[3] = indices[2] + 1; indices[3] < n; indices[3]++) {
+                    for (indices[4] = indices[3] + 1; indices[4] < n; indices[4]++) {
+                        memcpy(combinations[count], indices, sizeof(indices));
+                        count++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void findOptimalPhase(t_map *map, t_position start_pos, t_orientation start_ori, t_move *phase_moves) {
+    t_position best_position = start_pos;
+    t_orientation best_orientation = start_ori;
+    int min_cost = INT_MAX;
+    t_move best_phase[5];
+
+    int combination_indices[TOTAL_COMBINATIONS][5]; // Tableau 2D pour les combinaisons
+    generateCombinations(9, 5, combination_indices); // Générer toutes les combinaisons
+
+    for (int c = 0; c < TOTAL_COMBINATIONS; c++) {
+        t_position current_pos = start_pos;
+        t_orientation current_ori = start_ori;
+        t_move current_phase[5];
+
+        // Charger la combinaison courante
+        for (int i = 0; i < 5; i++) {
+            current_phase[i] = phase_moves[combination_indices[c][i]];
+        }
+
+        // Simuler la phase
+        int valid = 1;
+        for (int i = 0; i < 5; i++) {
+            if (!apply_move_simulation(map, &current_pos, &current_ori, current_phase[i])) {
+                valid = 0; // Mouvement invalide
+                break;
+            }
+
+            // Si on atteint la base, c'est gagné
+            if (map->costs[current_pos.y][current_pos.x] == 0) {
+                printf("C'est gagne ! Phase optimale trouvee :\n");
+                for (int j = 0; j <= i; j++) {
+                    printf("Mouvement %d : %s\n", j + 1, moveToString(current_phase[j]));
+                }
+                printf("Position finale : (%d, %d) | Orientation finale : %s | Cout total : 0\n",
+                       current_pos.x, current_pos.y, orientationToString(current_ori));
+                return;
+            }
+        }
+
+        // Vérifier si la phase est valide et le coût minimal
+        if (valid) {
+            int final_cost = map->costs[current_pos.y][current_pos.x];
+            if (final_cost < min_cost) {
+                min_cost = final_cost;
+                best_position = current_pos;
+                best_orientation = current_ori;
+                memcpy(best_phase, current_phase, sizeof(best_phase));
+            }
+        }
+    }
+
+    // Afficher la phase optimale
+    printf("Phase optimale trouvee :\n");
+    for (int i = 0; i < 5; i++) {
+        printf("Mouvement %d : %s\n", i + 1, moveToString(best_phase[i]));
+    }
+    printf("Position finale : (%d, %d) | Orientation finale : %s | Cout total : %d\n",
+           best_position.x, best_position.y, orientationToString(best_orientation), min_cost);
 }
 
 

@@ -3,6 +3,7 @@
 //
 
 #include "moves.h"
+#include "types.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -188,49 +189,63 @@ void adjust_move_for_terrain(t_map *map, t_position *pos, t_move *move) {
 
 void apply_move(t_position *pos, t_orientation *ori, t_move move) {
     switch (move) {
-        case F_10: // Avancer de 10 unités
-        case F_20: // Avancer de 20 unités
-        case F_30: // Avancer de 30 unités
-        {
-            int step = (move == F_10) ? 1 : (move == F_20) ? 2 : 3; // Conversion en pas
+        case F_10:
+        case F_20:
+        case F_30: {
+            int step = (move == F_10) ? 1 : (move == F_20) ? 2 : 3;
             switch (*ori) {
-                case NORTH: pos->y -= step; break;
-                case EAST:  pos->x += step; break;
-                case SOUTH: pos->y += step; break;
-                case WEST:  pos->x -= step; break;
-                default: break;
+                case NORTH: pos->y -= step; break; // Y diminue vers le haut
+                case EAST:  pos->x += step; break; // X augmente vers la droite
+                case SOUTH: pos->y += step; break; // Y augmente vers le bas
+                case WEST:  pos->x -= step; break; // X diminue vers la gauche
             }
             break;
         }
-
-        case B_10: // Reculer de 10 unités
-        {
-            int step = 1; // Recul toujours de 1 pas
+        case B_10: {
+            int step = 1; // Marche arrière de 10 unités
             switch (*ori) {
                 case NORTH: pos->y += step; break;
                 case EAST:  pos->x -= step; break;
                 case SOUTH: pos->y -= step; break;
                 case WEST:  pos->x += step; break;
-                default: break;
             }
             break;
         }
-
-        case T_LEFT: // Tourner à gauche
-            *ori = (*ori + 3) % 4; // Cycle dans les orientations
+        case T_LEFT:
+            *ori = (*ori + 3) % 4; // Cycle : 0 -> 3 -> 2 -> 1 -> 0
             break;
-
-        case T_RIGHT: // Tourner à droite
-            *ori = (*ori + 1) % 4; // Cycle dans les orientations
+        case T_RIGHT:
+            *ori = (*ori + 1) % 4; // Cycle : 0 -> 1 -> 2 -> 3 -> 0
             break;
-
-        case U_TURN: // Faire un demi-tour
-            *ori = (*ori + 2) % 4; // Cycle dans les orientations
+        case U_TURN:
+            *ori = (*ori + 2) % 4; // Cycle : 0 -> 2 et 1 -> 3
             break;
-
         default:
-            break; // Mouvement non valide ou aucun mouvement
+            break; // Pas de mouvement
     }
+}
 
 
+
+
+
+const char *moveToString(t_move move) {
+    switch (move) {
+        case F_10:
+            return "Avancer de 10 unites";
+        case F_20:
+            return "Avancer de 20 unites";
+        case F_30:
+            return "Avancer de 30 unites";
+        case B_10:
+            return "Reculer de 10 unites";
+        case T_LEFT:
+            return "Tourner a gauche";
+        case T_RIGHT:
+            return "Tourner a droite";
+        case U_TURN:
+            return "Faire un demi-tour";
+        default:
+            return "Mouvement inconnu";
+    }
 }

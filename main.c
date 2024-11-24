@@ -4,6 +4,7 @@
 #include "types.h"
 #include <stdlib.h>
 #include "loc.h"
+#include <time.h>
 
 void print_orientation(t_orientation ori) {
     switch (ori) {
@@ -15,12 +16,22 @@ void print_orientation(t_orientation ori) {
     }
 }
 
+void measureExecutionTime(void (*func)(void *), void *args) {
+    clock_t start, end;
+    double cpu_time_used;
+
+    start = clock();
+    func(args); // Appelle la fonction passée en paramètre
+    end = clock();
+
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Temps d'execution : %f secondes\n", cpu_time_used);
+}
+
 int main() {
     t_map map;
 
-    // The following preprocessor directive checks if the code is being compiled on a Windows system.
-    // If either _WIN32 or _WIN64 is defined, it means we are on a Windows platform.
-    // On Windows, file paths use backslashes (\), hence we use the appropriate file path for Windows.
+    
 #if defined(_WIN32) || defined(_WIN64)
     map = createMapFromFile("..\\maps\\example1.map");
 #else
@@ -57,7 +68,13 @@ int main() {
     int availability[7] = {22, 15, 7, 7, 21, 21, 7}; // Disponibilités des mouvements
     t_move phase_moves[9];
 
+    clock_t start, end;
+    double cpu_time_used;
 
+    int n = 100000000; // Exemple de boucle
+    long sum = 0;
+
+    start = clock();
 
     t_node *root = buildTree(&map, start_pos, start_ori, 0, phase_moves);
     if (!root) {
@@ -69,7 +86,12 @@ int main() {
     t_node *best_leaf = NULL;
     int min_cost = INT_MAX;
 
+    end = clock();
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Temps d'execution : %f secondes\n", cpu_time_used);
 
+
+    start = clock();
     t_position positions[5];
     int total_cost = 0;
     while (1) {
@@ -90,6 +112,10 @@ int main() {
 
         printf("\n--- Nouvelle phase ---\n");
     }
+
+    end = clock();
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Temps d'execution : %f secondes\n", cpu_time_used);
 
     return 0;
 }
